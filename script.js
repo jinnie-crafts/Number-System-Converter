@@ -4,6 +4,9 @@
 
 const DIGITS = "0123456789ABCDEF";
 
+// Default theme: Dark
+document.body.classList.add("dark");
+
 /* ==========================
    DOM REFERENCES
 ========================== */
@@ -18,6 +21,7 @@ const toBase = document.getElementById("toBase");
 /* ==========================
    THEME
 ========================== */
+themeToggle.checked = true;
 
 themeToggle.addEventListener("change", () => {
   document.body.classList.toggle("dark");
@@ -318,9 +322,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function explainDecimalToBase(decimal, base) {
-  if (base === 10) {
-    return `<strong>No conversion needed.</strong><br>${decimal}<sub>10</sub>`;
-  }
+  
 
   let html = `<strong>Decimal → ${base}-base</strong><br><br>`;
 
@@ -356,6 +358,57 @@ document.addEventListener("DOMContentLoaded", () => {
 }
 
 
+
+
+
+
+
+function explainBaseToDecimal(input, base) {
+  const { integer, fraction } = parseNumber(input);
+  let html = `<strong>${base}-base → Decimal</strong><br><br>`;
+  let sum = 0;
+
+  html += `<strong>Integer part:</strong><br>`;
+  for (let i = 0; i < integer.length; i++) {
+    const val = DIGITS.indexOf(integer[i]);
+    const power = integer.length - 1 - i;
+    const part = val * Math.pow(base, power);
+    sum += part;
+    html += `${integer[i]} × ${base}<sup>${power}</sup> = ${part}<br>`;
+  }
+
+  if (fraction) {
+    html += `<br><strong>Fractional part:</strong><br>`;
+    for (let i = 0; i < fraction.length; i++) {
+      const val = DIGITS.indexOf(fraction[i]);
+      const part = val * Math.pow(base, -(i + 1));
+      sum += part;
+      html += `${fraction[i]} × ${base}<sup>-${i + 1}</sup> = ${part}<br>`;
+    }
+  }
+
+  html += `<br>
+    <div class="final-result">
+      Final Result =
+      <span class="final-value">
+        ( ${sum} )<sub>10</sub>
+      </span>
+    </div>
+  `;
+
+  return html;
+}
+
+
+
+
+
+
+
+
+
+
+
   seeHowBtn.addEventListener("click", () => {
     const number = document.getElementById("numberInput").value.trim();
     const fromBase = document.getElementById("fromBase").value;
@@ -373,7 +426,20 @@ document.addEventListener("DOMContentLoaded", () => {
       closeSeeHow(true);
     } else {
       const decimal = toDecimal(number, parseInt(fromBase));
-      howBox.innerHTML = explainDecimalToBase(decimal, parseInt(toBaseValue));
+
+if (fromBase === toBaseValue) {
+  howBox.innerHTML = `
+    <strong>No conversion needed.</strong><br>
+    ( ${number} )<sub>${fromBase}</sub>
+  `;
+} 
+else if (parseInt(toBaseValue) === 10) {
+  howBox.innerHTML = explainBaseToDecimal(number, parseInt(fromBase));
+} 
+else {
+  howBox.innerHTML = explainDecimalToBase(decimal, parseInt(toBaseValue));
+}
+
       howBox.style.display = "block";
       seeHowBtn.classList.add("open");
 
