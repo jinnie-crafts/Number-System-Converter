@@ -1,3 +1,13 @@
+/* ==========================
+   GLOBAL CONSTANTS
+========================== */
+
+const DIGITS = "0123456789ABCDEF";
+
+/* ==========================
+   DOM REFERENCES
+========================== */
+
 const resultSection = document.getElementById("resultSection");
 const resultBox = document.getElementById("resultBox");
 const themeToggle = document.getElementById("themeToggle");
@@ -5,12 +15,18 @@ const copyBtn = document.getElementById("copyBtn");
 const swapBtn = document.getElementById("swapBtn");
 const toBase = document.getElementById("toBase");
 
-/* THEME */
+/* ==========================
+   THEME
+========================== */
+
 themeToggle.addEventListener("change", () => {
   document.body.classList.toggle("dark");
 });
 
-/* TOAST */
+/* ==========================
+   TOAST
+========================== */
+
 function showToast(message) {
   const toast = document.getElementById("toast");
   toast.textContent = message;
@@ -18,12 +34,18 @@ function showToast(message) {
   setTimeout(() => toast.classList.remove("show"), 2000);
 }
 
-/* DISABLE SWAP WHEN CONVERT TO ALL */
+/* ==========================
+   SWAP DISABLE
+========================== */
+
 toBase.addEventListener("change", () => {
   swapBtn.disabled = toBase.value === "all";
 });
 
-/* SWAP WITH ANIMATION */
+/* ==========================
+   SWAP BASES
+========================== */
+
 function swapBases() {
   if (toBase.value === "all") return;
 
@@ -42,42 +64,123 @@ function swapBases() {
   }, 300);
 }
 
-/* VALIDATION */
+/* ==========================
+   VALIDATION (FIXED)
+========================== */
+
 function isValid(num, base) {
   const patterns = {
-    2: /^[01]+$/,
-    8: /^[0-7]+$/,
-    10: /^[0-9]+$/,
-    16: /^[0-9a-fA-F]+$/
+    2: /^[01]+(\.[01]+)?$/,
+    8: /^[0-7]+(\.[0-7]+)?$/,
+    10: /^[0-9]+(\.[0-9]+)?$/,
+    16: /^[0-9a-fA-F]+(\.[0-9a-fA-F]+)?$/
   };
   return patterns[base].test(num);
 }
 
+/* ==========================
+   NUMBER PARSING
+========================== */
+
+function parseNumber(input) {
+  const [integer, fraction = ""] = input.toUpperCase().split(".");
+  return { integer, fraction };
+}
+
+/* ==========================
+   BASE → DECIMAL (FRACTION SAFE)
+========================== */
+
+function toDecimal(input, base) {
+  const { integer, fraction } = parseNumber(input);
+  let value = 0;
+
+  for (let i = 0; i < integer.length; i++) {
+    value +=
+      DIGITS.indexOf(integer[i]) *
+      Math.pow(base, integer.length - 1 - i);
+  }
+
+  for (let i = 0; i < fraction.length; i++) {
+    value +=
+      DIGITS.indexOf(fraction[i]) *
+      Math.pow(base, -(i + 1));
+  }
+
+  return value;
+}
+
+/* ==========================
+   DECIMAL → BASE (FRACTION SAFE)
+========================== */
+
+function fromDecimal(decimal, base, precision = 7) {
+  let intPart = Math.floor(decimal);
+  let fracPart = decimal - intPart;
+
+  let intResult = "";
+  if (intPart === 0) intResult = "0";
+  while (intPart > 0) {
+    intResult = DIGITS[intPart % base] + intResult;
+    intPart = Math.floor(intPart / base);
+  }
+
+  let fracResult = "";
+  let count = 0;
+  while (fracPart > 0 && count < precision) {
+    fracPart *= base;
+    const digit = Math.floor(fracPart);
+    fracResult += DIGITS[digit];
+    fracPart -= digit;
+    count++;
+  }
+
+  return fracResult ? `${intResult}.${fracResult}` : intResult;
+}
+
+/* ==========================
+   RESULT FORMAT
+========================== */
+
 function formatResult(value, base) {
   return `( ${value} )<sub>${base}</sub>`;
 }
-//see how box closed on new calculation 
-function resetSeeHow() {
+
+/* ==========================
+   RESET SEE HOW
+========================== */
+
+function closeSeeHow(animated = true) {
   const howBox = document.getElementById("howBox");
   const seeHowBtn = document.getElementById("seeHowBtn");
 
   if (!howBox || !seeHowBtn) return;
+  if (howBox.style.display !== "block") return;
 
-  if (howBox.style.display === "block") {
+  if (animated) {
     howBox.classList.add("closing");
-
     setTimeout(() => {
       howBox.style.display = "none";
       howBox.classList.remove("closing");
       seeHowBtn.classList.remove("open");
     }, 300);
+  } else {
+    howBox.style.display = "none";
+    seeHowBtn.classList.remove("open");
   }
 }
 
+function resetSeeHow() {
+  closeSeeHow(true);
+}
 
-/* CONVERT */
+/* ==========================
+   CONVERT
+========================== */
+
 function convert() {
   resetSeeHow();
+
   const number = document.getElementById("numberInput").value.trim();
   const fromBase = document.getElementById("fromBase").value;
   const toBaseValue = toBase.value;
@@ -87,16 +190,19 @@ function convert() {
     return;
   }
 
-  const decimal = parseInt(number, fromBase);
+  const decimal = toDecimal(number, parseInt(fromBase));
   let output = "";
 
   if (toBaseValue === "all") {
-    output += `Binary: ${formatResult(decimal.toString(2), 2)}<br>`;
-    output += `Decimal: ${formatResult(decimal.toString(10), 10)}<br>`;
-    output += `Octal: ${formatResult(decimal.toString(8), 8)}<br>`;
-    output += `Hexadecimal: ${formatResult(decimal.toString(16).toUpperCase(), 16)}`;
+    output += `Binary: ${formatResult(fromDecimal(decimal, 2), 2)}<br>`;
+    output += `Decimal: ${formatResult(decimal.toString(), 10)}<br>`;
+    output += `Octal: ${formatResult(fromDecimal(decimal, 8), 8)}<br>`;
+    output += `Hexadecimal: ${formatResult(fromDecimal(decimal, 16), 16)}`;
   } else {
-    output = formatResult(decimal.toString(toBaseValue).toUpperCase(), toBaseValue);
+    output = formatResult(
+      fromDecimal(decimal, parseInt(toBaseValue)),
+      toBaseValue
+    );
   }
 
   resultBox.innerHTML = output;
@@ -108,8 +214,10 @@ function convert() {
   resultSection.scrollIntoView({ behavior: "smooth" });
 }
 
+/* ==========================
+   COPY
+========================== */
 
-/* COPY */
 function copyResult() {
   const text = resultBox.innerText.trim();
   if (!text) return;
@@ -127,23 +235,30 @@ function copyResult() {
   setTimeout(() => copyBtn.classList.remove("copied"), 1500);
 }
 
+/* ==========================
+   LOGO RIPPLE
+========================== */
 
 const logoImg = document.querySelector(".logo img");
+if (logoImg) {
+  logoImg.addEventListener("click", () => {
+    logoImg.classList.remove("ripple");
+    void logoImg.offsetWidth;
+    logoImg.classList.add("ripple");
+  });
+}
 
-logoImg.addEventListener("click", () => {
-  logoImg.classList.remove("ripple");
-  void logoImg.offsetWidth;
-  logoImg.classList.add("ripple");
-});
-
+/* ==========================
+   EXTERNAL LINKS
+========================== */
 
 document.addEventListener("click", event => {
   const link = event.target.closest("a");
-
   if (!link) return;
 
-  const isExternal = link.href.startsWith("http") &&
-                     !link.href.includes(window.location.origin);
+  const isExternal =
+    link.href.startsWith("http") &&
+    !link.href.includes(window.location.origin);
 
   if (isExternal) {
     event.preventDefault();
@@ -151,104 +266,95 @@ document.addEventListener("click", event => {
   }
 });
 
-//see how button and logic 
-/* ================================
-   SEE HOW — FINAL FIX (WORKING)
-================================ */
+/* ==========================
+   SEE HOW EXPLANATION (PHASE 1 FIXED)
+========================== */
 
 document.addEventListener("DOMContentLoaded", () => {
   const seeHowBtn = document.getElementById("seeHowBtn");
   const howBox = document.getElementById("howBox");
 
-  if (!seeHowBtn || !howBox) {
-    console.error("See How elements not found");
-    return;
-  }
+  if (!seeHowBtn || !howBox) return;
 
-  howBox.style.display = "none";
-
-  const DIGITS = "0123456789ABCDEF";
-
-  function charToValue(c) {
-    return DIGITS.indexOf(c.toUpperCase());
-  }
-
-  function valueToChar(v) {
-    return DIGITS[v];
-  }
-
-  function explainToDecimal(num, base) {
-    let html = `<strong>${base}-base → Decimal</strong><br><br>`;
-    let sum = 0;
-
-    const digits = num.toUpperCase().split("").reverse();
-
-    digits.forEach((d, i) => {
-      const val = charToValue(d);
-      const part = val * Math.pow(base, i);
-      sum += part;
-
-      html += `
-        <div class="step-row">
-          (${d} × ${base}<sup>${i}</sup>) = <span class="hl">${part}</span>
-        </div>
-      `;
-    });
-
-    html += `<br><strong>Decimal = ${sum}<sub>10</sub></strong><br><br>`;
-    return { sum, html };
-  }
-
-  function explainFromDecimal(decimal, base) {
-    let html = `<strong>Decimal → ${base}-base</strong><br><br>`;
-    let n = decimal;
-    let result = "";
-
+  function explainIntegerPart(n, base) {
     if (n === 0) {
-      return { result: "0", html };
+      return {
+        steps: `<strong>Integer part:</strong><br>0<sub>${base}</sub><br><br>`,
+        result: "0"
+      };
     }
 
+    let steps = `<strong>Integer part:</strong><br>`;
+    let remainders = [];
+
     while (n > 0) {
-      const rem = n % base;
-      const ch = valueToChar(rem);
-
-      html += `
-        <div class="step-row">
-          ${n} ÷ ${base} = ${Math.floor(n / base)}
-          <span class="remainder">${ch}</span>
-        </div>
-      `;
-
-      result = ch + result;
+      const r = n % base;
+      steps += `${n} ÷ ${base} = ${Math.floor(n / base)} remainder <b>${r}</b><br>`;
+      remainders.unshift(r);
       n = Math.floor(n / base);
     }
 
-    html += `<br><strong>Result = ${result}<sub>${base}</sub></strong>`;
-    return { result, html };
+    steps += `<br>Integer result = ${remainders.join("")}<sub>${base}</sub><br><br>`;
+    return { steps, result: remainders.join("") };
   }
 
-  function buildExplanation(number, fromBase, toBase) {
-    let html = "";
-    let decimal = number;
+  function explainFractionPart(frac, base, precision = 7) {
+    let steps = `<strong>Fractional part:</strong><br>`;
+    let digits = "";
+    let count = 0;
 
-    if (fromBase !== "10") {
-      const toDec = explainToDecimal(number, parseInt(fromBase));
-      html += toDec.html;
-      decimal = toDec.sum;
+    while (frac > 0 && count < precision) {
+      const prev = frac;
+      frac *= base;
+      const digit = Math.floor(frac);
+      steps += `${prev.toFixed(6)} × ${base} = ${frac.toFixed(6)} → <b>${digit}</b><br>`;
+      digits += digit;
+      frac -= digit;
+      count++;
     }
 
-    if (toBase !== "10") {
-      const fromDec = explainFromDecimal(decimal, parseInt(toBase));
-      html += fromDec.html;
-    }
-
-    if (fromBase === toBase) {
-      html = `<strong>No conversion needed.</strong><br>
-              ${number}<sub>${fromBase}</sub>`;
-    }
-
-    return html;
+    steps += `<br>Fraction result = .${digits}<br><br>`;
+    return { steps, result: digits };
   }
+
+  function explainDecimalToBase(decimal, base) {
+  if (base === 10) {
+    return `<strong>No conversion needed.</strong><br>${decimal}<sub>10</sub>`;
+  }
+
+  let html = `<strong>Decimal → ${base}-base</strong><br><br>`;
+
+  const intPart = Math.floor(decimal);
+  const fracPart = decimal - intPart;
+
+  const intExp = explainIntegerPart(intPart, base);
+  html += intExp.steps;
+
+  let fracResult = "";
+  if (fracPart > 0) {
+    const fracExp = explainFractionPart(fracPart, base);
+    fracResult = fracExp.result;
+    html += fracExp.steps;
+  }
+
+  // 🔥 FINAL RESULT (NEW)
+  const finalValue =
+    fracResult
+      ? `${intExp.result}.${fracResult}`
+      : intExp.result;
+
+  html += `
+    <div class="final-result">
+      Final Result = 
+      <span class="final-value">
+        ( ${finalValue} )<sub>${base}</sub>
+      </span>
+    </div>
+  `;
+
+  return html;
+}
+
 
   seeHowBtn.addEventListener("click", () => {
     const number = document.getElementById("numberInput").value.trim();
@@ -264,14 +370,13 @@ document.addEventListener("DOMContentLoaded", () => {
     const open = howBox.style.display === "block";
 
     if (open) {
-      howBox.style.display = "none";
-      seeHowBtn.classList.remove("open");
+      closeSeeHow(true);
     } else {
-      howBox.innerHTML = buildExplanation(number, fromBase, toBaseValue);
+      const decimal = toDecimal(number, parseInt(fromBase));
+      howBox.innerHTML = explainDecimalToBase(decimal, parseInt(toBaseValue));
       howBox.style.display = "block";
       seeHowBtn.classList.add("open");
 
-      // layered animation
       requestAnimationFrame(() => {
         howBox.querySelectorAll(".step-row").forEach((row, i) => {
           setTimeout(() => row.classList.add("active"), i * 120);

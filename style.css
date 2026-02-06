@@ -745,3 +745,28 @@ body.dark .how-box {
     transform: translateY(-6px);
   }
 }
+
+
+.final-result {
+  margin-top: 16px;
+  padding: 12px;
+  border-radius: 12px;
+  text-align: center;
+  font-weight: 600;
+  background: rgba(100, 120, 255, 0.08);
+  animation: resultGlow 1.5s ease-in-out infinite alternate;
+}
+
+.final-value {
+  color: var(--primary);
+  font-size: 1.05em;
+}
+
+@keyframes resultGlow {
+  from {
+    box-shadow: 0 0 6px rgba(100, 120, 255, 0.4);
+  }
+  to {
+    box-shadow: 0 0 14px rgba(100, 120, 255, 0.8);
+  }
+}
