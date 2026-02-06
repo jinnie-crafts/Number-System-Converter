@@ -624,3 +624,124 @@ body.dark .logo img {
   }
 }
 
+/* See How */
+.see-how-wrapper {
+  margin-top: 16px;
+}
+
+.see-how-btn {
+  background: none;
+  border: none;
+  color: var(--primary);
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.see-how-btn .arrow {
+  transition: transform 0.3s ease;
+}
+
+.see-how-btn.open .arrow {
+  transform: rotate(180deg);
+}
+
+.how-box {
+  display: none;
+  margin-top: 14px;
+  padding: 16px;
+  border-radius: 14px;
+  background: rgba(99,102,241,0.08);
+  line-height: 1.9;
+  animation: howFade 0.4s ease;
+}
+
+@keyframes howFade {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Carry / Remainder rows */
+.step-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 10px;
+  border-radius: 10px;
+  margin: 6px 0;
+  transition: all 0.4s ease;
+}
+
+.step-row.active {
+  background: rgba(99,102,241,0.18);
+  box-shadow: 0 0 18px rgba(99,102,241,0.45);
+}
+
+.remainder {
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 6px;
+  transition: all 0.4s ease;
+}
+
+.remainder.active {
+  background: var(--primary);
+  color: white;
+  transform: scale(1.2);
+}
+
+/* Final binary */
+.final-binary {
+  margin-top: 14px;
+  padding-top: 10px;
+  border-top: 1px dashed rgba(99,102,241,0.4);
+  font-weight: 700;
+  color: var(--primary);
+}
+
+/* Dark mode */
+body.dark .how-box {
+  background: rgba(165,180,252,0.12);
+}
+
+
+
+.step-row {
+  opacity: 0;
+  transform: translateY(6px);
+  transition: all 0.35s ease;
+}
+
+.step-row.active {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.hl, .remainder {
+  font-weight: 700;
+  color: var(--primary);
+}
+
+
+/*see how box closing*/
+.how-box.closing {
+  animation: closeHow 0.3s ease forwards;
+}
+
+@keyframes closeHow {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
