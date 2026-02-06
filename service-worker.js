@@ -1,4 +1,4 @@
-const CACHE_NAME = "numx-offline-v2.1";
+const CACHE_NAME = "numx-offline-v2.11";
 
 const ASSETS_TO_CACHE = [
   "./",
@@ -53,4 +53,5 @@ self.addEventListener("fetch", event => {
     caches.match(req).then(cached => cached || fetch(req))
   );
 });
+
 
